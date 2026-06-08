@@ -36,7 +36,7 @@
         .card .img-container { width: 100%; height: 200px; background: white; display: flex; align-items: center; justify-content: center; padding: 15px; overflow: hidden; }
         .card img { max-width: 100%; max-height: 100%; object-fit: contain; }
         
-        /* Correction ici pour la découpe de l'image d'origine */
+        /* Garde le style spécial pour découper l'image d'origine */
         .card .drink-crop { width: 110px; height: 180px; object-fit: cover; object-position: var(--crop-x) center; }
 
         .card-body { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
@@ -100,7 +100,7 @@
 
     <div class="promo-banner" id="promo-msg">🎉 OFFRE EXCLUSIVE : 2 Boissons OFFERTES pour toute commande de Pizza ou Burger ! 🥤🎁</div>
 
-    <header id="site-header">
+    <header>
         <h1 id="site-title">Pizza Love</h1>
         <p id="site-subtitle" style="font-size: 1.3rem;">La véritable tradition Italienne & Burgers Gourmets</p>
         <div class="badge-italy" onclick="secretAdminClick()"></div>
@@ -118,8 +118,8 @@
 
         <div class="footer-info-grid">
             <div class="map-box">
-                <h3 style="margin-bottom:15px; color:var(--primary)" id="title-find-us">📍 Où nous trouver</h3>
-                <iframe id="site-map" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2624.9916256937595!2d2.3415!3d48.8584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e66e1f06e2a76b%3A0x6b876d7fcf79f88d!2s16%20Rue%20Arthur%20Fontaine%2C%20France!5e0!3m2!1sfr!2sfr!4v1700000000000" allowfullscreen="" loading="lazy"></iframe>
+                <h3 style="margin-bottom:15px; color:var(--primary)">📍 Où nous trouver</h3>
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2624.9916256937595!2d2.3415!3d48.8584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e66e1f06e2a76b%3A0x6b876d7fcf79f88d!2s16%20Rue%20Arthur%20Fontaine%2C%20France!5e0!3m2!1sfr!2sfr!4v1700000000000" allowfullscreen="" loading="lazy"></iframe>
             </div>
 
             <div>
@@ -161,7 +161,7 @@
             <div id="cart-items-list" style="margin: 20px 0; max-height: 250px; overflow-y: auto;"></div>
             <div id="promo-notice" style="margin-bottom: 15px;"></div>
             <h3 style="margin-bottom: 20px;">Total: <span id="cart-total">0.00</span> €</h3>
-            <button class="btn" id="btn-insta-order" onclick="checkoutInstagram()" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);">
+            <button class="btn" onclick="checkoutInstagram()" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);">
                 📸 Commander via Instagram
             </button>
         </div>
@@ -176,7 +176,6 @@
                 <button class="tab-btn active" onclick="switchTab('tab-items')">Menu, Stocks & Photos</button>
                 <button class="tab-btn" onclick="switchTab('tab-add')">Ajouter Produit / Boisson</button>
                 <button class="tab-btn" onclick="switchTab('tab-promo')">Offres & Promos 🎁</button>
-                <button class="tab-btn" onclick="switchTab('tab-design')" style="background:#b45309; color:white;">✨ Design & Infos Site</button>
                 <button class="tab-btn" onclick="switchTab('tab-reviews')">Avis Clients</button>
             </div>
 
@@ -197,7 +196,7 @@
                 <input type="text" id="new-name" placeholder="Nom (ex: Coca-Cola)">
                 <input type="text" id="new-desc" placeholder="Description ou Ingrédients">
                 <input type="number" step="0.01" id="new-price" placeholder="Prix (ex: 1.50)">
-                <input type="text" id="new-img" placeholder="URL ou nom de l'image">
+                <input type="text" id="new-img" placeholder="Nom de l'image (ex: image_ce1a29.png) ou URL Internet">
                 <button class="btn" style="margin-top:10px;" onclick="addNewProduct()">Enregistrer le produit</button>
             </div>
 
@@ -205,31 +204,13 @@
                 <h4>Activer / Désactiver les offres</h4>
                 <div style="margin: 15px 0; background: #f3f4f6; padding: 15px; border-radius: 8px;">
                     <label style="font-weight: bold; display: block; margin-bottom: 8px;">
-                        <input type="checkbox" id="toggle-promo-active"> Activer le système de boissons offertes dans le panier
+                        <input type="checkbox" id="toggle-promo-active" onchange="savePromoSettings()"> Activer le système de boissons offertes dans le panier
                     </label>
+                    <p style="font-size:0.85rem; color:gray;">Si activé, le panier offrira automatiquement les boissons lors d'un achat de pizza/burger.</p>
                 </div>
                 <h4>Texte de la bannière promotionnelle</h4>
                 <input type="text" id="edit-promo-msg">
                 <button class="btn" style="margin-top:10px;" onclick="savePromoSettings()">Appliquer les modifications</button>
-            </div>
-
-            <div id="tab-design" class="admin-tab-content">
-                <h4>Modifier les Textes principaux</h4>
-                <label>Nom du Site :</label> <input type="text" id="edit-site-title">
-                <label>Sous-titre du haut :</label> <input type="text" id="edit-site-subtitle">
-                <label>Infos d'entête (Adresse & Horaires) :</label> <input type="text" id="edit-banner-info">
-                <label>Texte "Où nous trouver" :</label> <input type="text" id="edit-title-find-us">
-                
-                <h4 style="margin-top:20px;">Modifier les Photos & l'Arrière-plan</h4>
-                <label>Image de Fond du Haut (Lien/URL) :</label> <input type="text" id="edit-header-bg">
-                <label>Couleur de Fond Générale (Code ex: #FFFDF9) :</label> <input type="text" id="edit-body-bg">
-                <label>Lien Iframe Carte Google Maps (URL `src=`) :</label> <input type="text" id="edit-site-map">
-                
-                <h4 style="margin-top:20px;">Réseaux & Commande</h4>
-                <label>Lien Profil Instagram :</label> <input type="text" id="edit-insta-url">
-                <label>Nom d'utilisateur Instagram :</label> <input type="text" id="edit-insta-username">
-
-                <button class="btn" style="margin-top:15px; background: #b45309;" onclick="saveDesignSettings()">Sauvegarder l'apparence et les infos</button>
             </div>
 
             <div id="tab-reviews" class="admin-tab-content">
@@ -242,43 +223,32 @@
     </div>
 
     <script>
-        // ---- CONFI_SUPABASE : METTEZ VOS COORDONNÉES ICI ----
-        const SUPABASE_URL = "https://VOTRE_PROJET.supabase.co";
-        const SUPABASE_ANON_KEY = "VOTRE_CLE_ANON_SUPABASE";
+        // ---- CONFIG SUPABASE : REMPLACE AVEC TES IDENTIFIANTS ----
+        const SUPABASE_URL = "https://abc123xyz.supabase.co"; // <-- Mets ton URL de projet ici
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // <-- Mets ta clé anon ici
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const translations = {
             fr: { pizzas: "Nos Pizzas Artisanales", burgers: "Nos Burgers Gourmets", drinks: "Nos Boissons Fraîches", cart: "Panier", yourCart: "Votre Panier", customDesc: "Modifier vos options :", price: "Prix", addCart: "Ajouter au Panier" },
             it: { pizzas: "Le Nostre Pizze Artigianali", burgers: "I Nostri Burger Gourmet", drinks: "Le Nostre Bevande", cart: "Carrello", yourCart: "Il Tuo Carrello", customDesc: "Personalizza le tue preferenze :", price: "Prezzo", addCart: "Aggiungi" },
-            es: { pizzas: "Nuestras Pizzas Artesanales", burgers: "Nuestras Hamburguesas", drinks: "Nuestras Bebidas", cart: "Carrito", yourCart: "Tu Carrito", customDesc: "Configura tus preferences :", price: "Precio", addCart: "Añadir" },
+            es: { pizzas: "Nuestras Pizzas Artesanales", burgers: "Nuestras Hamburguesas", drinks: "Nuestras Bebidas", cart: "Carrito", yourCart: "Tu Carrito", customDesc: "Configura tus preferencias :", price: "Precio", addCart: "Añadir" },
             en: { pizzas: "Our Artisanal Pizzas", burgers: "Our Gourmet Burgers", drinks: "Our Cold Drinks", cart: "Cart", yourCart: "Your Cart", customDesc: "Uncheck ingredients or customize option:", price: "Price", addCart: "Add to Cart" }
         };
 
         let items = [];
         let reviews = [];
-        let config = {
-            title: "Pizza Love",
-            subtitle: "La véritable tradition Italienne & Burgers Gourmets",
-            banner: "📍 16 rue Arthur Fontaine | ⏰ Lun - Dim : 12h - 23h",
-            title_find: "📍 Où nous trouver",
-            header_bg: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80",
-            body_bg: "#FFFDF9",
-            map_url: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2624.9916256937595!2d2.3415!3d48.8584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e66e1f06e2a76b%3A0x6b876d7fcf79f88d!2s16%20Rue%20Arthur%20Fontaine%2C%20France!5e0!3m2!1sfr!2sfr!4v1700000000000",
-            insta_url: "https://www.instagram.com/yusef_rh93/",
-            insta_user: "@yusef_rh93",
-            promo_msg: "🎉 OFFRE EXCLUSIVE : 2 Boissons OFFERTES pour toute commande de Pizza ou Burger ! 🥤🎁",
-            promo_active: true
-        };
+        let siteTitle = "Pizza Love";
+        let bannerText = "📍 16 rue Arthur Fontaine | ⏰ Lun - Dim : 12h - 23h";
+        let promoText = "🎉 OFFRE EXCLUSIVE : 2 Boissons OFFERTES pour toute commande de Pizza ou Burger ! 🥤🎁";
+        let isPromoActive = true; 
         let currentLang = localStorage.getItem('p_love_lang') || "fr";
         let cart = [];
         let selectedProduct = null;
         let adminClickCount = 0;
 
+        // Charger directement depuis Supabase au démarrage
         async function loadDataFromSupabase() {
             try {
-                let { data: configData } = await _supabase.from('site_settings').select('*').eq('id', 1).single();
-                if (configData) config = configData;
-
                 let { data: itemsData } = await _supabase.from('items').select('*').order('id', { ascending: true });
                 items = itemsData || [];
 
@@ -287,7 +257,7 @@
 
                 renderSite();
             } catch (err) {
-                console.error("Erreur Supabase:", err);
+                console.error("Erreur de synchro Supabase:", err);
                 renderSite();
             }
         }
@@ -307,17 +277,11 @@
         }
 
         function renderSite() {
-            document.getElementById('site-title').innerText = config.title;
-            document.getElementById('site-subtitle').innerText = config.subtitle;
-            document.getElementById('banner-info').innerText = config.banner;
-            document.getElementById('title-find-us').innerText = config.title_find;
-            document.getElementById('promo-msg').innerText = config.promo_msg;
-            document.getElementById('promo-msg').style.display = config.promo_msg?.trim() ? 'block' : 'none';
+            document.getElementById('site-title').innerText = siteTitle;
+            document.getElementById('banner-info').innerText = bannerText;
+            document.getElementById('promo-msg').innerText = promoText;
+            document.getElementById('promo-msg').style.display = promoText.trim() ? 'block' : 'none';
             
-            document.body.style.backgroundColor = config.body_bg;
-            document.getElementById('site-header').style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${config.header_bg}')`;
-            document.getElementById('site-map').src = config.map_url;
-
             const pizzaContainer = document.getElementById('pizza-container');
             const burgerContainer = document.getElementById('burger-container');
             const drinkContainer = document.getElementById('drink-container');
@@ -326,7 +290,7 @@
 
             items.forEach(item => {
                 const isDrink = item.type === 'drink';
-                // Correction de la variable CSS ici (liaison avec item.crop_x de Supabase)
+                // Compatibilité avec la colonne crop_x de la BDD Supabase
                 const imgTag = (isDrink && item.crop_x) 
                     ? `<img src="${item.img}" class="drink-crop" style="--crop-x: ${item.crop_x}" alt="${item.name}">`
                     : `<img src="${item.img}" alt="${item.name}">`;
@@ -407,7 +371,7 @@
                 if(item.type === 'drink') drinksInCart.push(index);
             });
 
-            let freeDrinksAllowed = (config.promo_active && countFood > 0) ? 2 : 0;
+            let freeDrinksAllowed = (isPromoActive && countFood > 0) ? 2 : 0;
             let discountedDrinkIndices = drinksInCart.slice(0, freeDrinksAllowed);
 
             cart.forEach((item, index) => {
@@ -431,7 +395,7 @@
                 `;
             });
 
-            if(config.promo_active && countFood > 0) {
+            if(isPromoActive && countFood > 0) {
                 if(discountedDrinkIndices.length === 0) {
                     promoNotice.innerHTML = `<p style="color:#b45309; font-weight:bold; font-size:0.85rem;">🎁 Offre : Ajoutez jusqu'à 2 boissons dans votre panier, elles seront 100% GRATUITES !</p>`;
                 } else {
@@ -454,7 +418,7 @@
             cart.forEach((item) => {
                 const sansText = item.removed && item.removed.length > 0 ? ` (SANS: ${item.removed.join(', ')})` : '';
                 let priceLabel = "";
-                if(config.promo_active && item.type === 'drink' && countFood > 0 && drinksCount < 2) {
+                if(isPromoActive && item.type === 'drink' && countFood > 0 && drinksCount < 2) {
                     priceLabel = " (OFFERTE)";
                     drinksCount++;
                 }
@@ -463,8 +427,8 @@
             message += `\n💰 Total final : ${document.getElementById('cart-total').innerText} €`;
             
             navigator.clipboard.writeText(message).then(() => {
-                alert(`🛒 Votre commande a été copiée !\n\nCollez simplement votre message en DM sur Instagram ${config.insta_user || ''}.`);
-                window.open(config.insta_url, "_blank");
+                alert("🛒 Votre commande a été copiée !\n\nCollez simplement votre message en DM sur Instagram @yusef_rh93.");
+                window.open("https://www.instagram.com/yusef_rh93/", "_blank");
             });
         }
 
@@ -492,19 +456,8 @@
                 adminClickCount = 0;
                 if(prompt("Code gérant :") === "3322") {
                     document.getElementById('adminModal').style.display = 'block';
-                    document.getElementById('toggle-promo-active').checked = config.promo_active;
-                    document.getElementById('edit-promo-msg').value = config.promo_msg;
-                    
-                    document.getElementById('edit-site-title').value = config.title;
-                    document.getElementById('edit-site-subtitle').value = config.subtitle;
-                    document.getElementById('edit-banner-info').value = config.banner;
-                    document.getElementById('edit-title-find-us').value = config.title_find;
-                    document.getElementById('edit-header-bg').value = config.header_bg;
-                    document.getElementById('edit-body-bg').value = config.body_bg;
-                    document.getElementById('edit-site-map').value = config.map_url;
-                    document.getElementById('edit-insta-url').value = config.insta_url;
-                    document.getElementById('edit-insta-username').value = config.insta_user;
-
+                    document.getElementById('toggle-promo-active').checked = isPromoActive;
+                    document.getElementById('edit-promo-msg').value = promoText;
                     renderAdminTable();
                     renderAdminReviewsTable();
                 }
@@ -554,14 +507,12 @@
             if(confirm("Supprimer ce produit définitivement ?")) {
                 await _supabase.from('items').delete().eq('id', id);
                 loadDataFromSupabase();
-                closeModal('adminModal');
             }
         }
         
         async function deleteReview(id) { 
             await _supabase.from('reviews').delete().eq('id', id); 
             loadDataFromSupabase(); 
-            closeModal('adminModal');
         }
 
         async function addNewProduct() {
@@ -585,31 +536,9 @@
         }
 
         async function savePromoSettings() {
-            const promo_active = document.getElementById('toggle-promo-active').checked;
-            const promo_msg = document.getElementById('edit-promo-msg').value;
-            
-            await _supabase.from('site_settings').update({ promo_active, promo_msg }).eq('id', 1);
-            loadDataFromSupabase();
-            closeModal('adminModal');
-        }
-
-        async function saveDesignSettings() {
-            const payload = {
-                title: document.getElementById('edit-site-title').value,
-                subtitle: document.getElementById('edit-site-subtitle').value,
-                banner: document.getElementById('edit-banner-info').value,
-                title_find: document.getElementById('edit-title-find-us').value,
-                header_bg: document.getElementById('edit-header-bg').value,
-                body_bg: document.getElementById('edit-body-bg').value,
-                map_url: document.getElementById('edit-site-map').value,
-                insta_url: document.getElementById('edit-insta-url').value,
-                insta_user: document.getElementById('edit-insta-username').value
-            };
-
-            await _supabase.from('site_settings').update(payload).eq('id', 1);
-            loadDataFromSupabase();
-            closeModal('adminModal');
-            alert("✨ Enregistré avec succès dans la base de données Supabase !");
+            isPromoActive = document.getElementById('toggle-promo-active').checked;
+            promoText = document.getElementById('edit-promo-msg').value;
+            renderSite();
         }
 
         function switchTab(tabId) {
@@ -619,6 +548,7 @@
             event.target.classList.add('active');
         }
 
+        // Démarrage automatique
         loadDataFromSupabase();
     </script>
 </body>
