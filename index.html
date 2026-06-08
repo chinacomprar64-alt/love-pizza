@@ -36,6 +36,7 @@
         .card .img-container { width: 100%; height: 200px; background: white; display: flex; align-items: center; justify-content: center; padding: 15px; overflow: hidden; }
         .card img { max-width: 100%; max-height: 100%; object-fit: contain; }
         
+        /* Correction ici pour la découpe de l'image d'origine */
         .card .drink-crop { width: 110px; height: 180px; object-fit: cover; object-position: var(--crop-x) center; }
 
         .card-body { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
@@ -86,7 +87,7 @@
 <body>
 
     <div class="top-bar">
-        <div id="banner-info">Chargement...</div>
+        <div id="banner-info">📍 16 rue Arthur Fontaine | ⏰ Lun - Dim : 12h - 23h</div>
         <div class="lang-selector">
             🌐 <select id="langSelect" onchange="changeLanguage(this.value)">
                 <option value="fr">Français 🇫🇷</option>
@@ -97,11 +98,11 @@
         </div>
     </div>
 
-    <div class="promo-banner" id="promo-msg">Chargement des offres...</div>
+    <div class="promo-banner" id="promo-msg">🎉 OFFRE EXCLUSIVE : 2 Boissons OFFERTES pour toute commande de Pizza ou Burger ! 🥤🎁</div>
 
     <header id="site-header">
         <h1 id="site-title">Pizza Love</h1>
-        <p id="site-subtitle" style="font-size: 1.3rem;">Chargement...</p>
+        <p id="site-subtitle" style="font-size: 1.3rem;">La véritable tradition Italienne & Burgers Gourmets</p>
         <div class="badge-italy" onclick="secretAdminClick()"></div>
     </header>
 
@@ -118,7 +119,7 @@
         <div class="footer-info-grid">
             <div class="map-box">
                 <h3 style="margin-bottom:15px; color:var(--primary)" id="title-find-us">📍 Où nous trouver</h3>
-                <iframe id="site-map" src="" allowfullscreen="" loading="lazy"></iframe>
+                <iframe id="site-map" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2624.9916256937595!2d2.3415!3d48.8584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e66e1f06e2a76b%3A0x6b876d7fcf79f88d!2s16%20Rue%20Arthur%20Fontaine%2C%20France!5e0!3m2!1sfr!2sfr!4v1700000000000" allowfullscreen="" loading="lazy"></iframe>
             </div>
 
             <div>
@@ -242,8 +243,8 @@
 
     <script>
         // ---- CONFI_SUPABASE : METTEZ VOS COORDONNÉES ICI ----
-        const SUPABASE_URL = "https://xipayodmvrwwlufembmg.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_lLiUWD4kfs-OOWUp09zglw_1R0weLbr";
+        const SUPABASE_URL = "https://VOTRE_PROJET.supabase.co";
+        const SUPABASE_ANON_KEY = "VOTRE_CLE_ANON_SUPABASE";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const translations = {
@@ -255,30 +256,39 @@
 
         let items = [];
         let reviews = [];
-        let config = {};
+        let config = {
+            title: "Pizza Love",
+            subtitle: "La véritable tradition Italienne & Burgers Gourmets",
+            banner: "📍 16 rue Arthur Fontaine | ⏰ Lun - Dim : 12h - 23h",
+            title_find: "📍 Où nous trouver",
+            header_bg: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80",
+            body_bg: "#FFFDF9",
+            map_url: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2624.9916256937595!2d2.3415!3d48.8584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e66e1f06e2a76b%3A0x6b876d7fcf79f88d!2s16%20Rue%20Arthur%20Fontaine%2C%20France!5e0!3m2!1sfr!2sfr!4v1700000000000",
+            insta_url: "https://www.instagram.com/yusef_rh93/",
+            insta_user: "@yusef_rh93",
+            promo_msg: "🎉 OFFRE EXCLUSIVE : 2 Boissons OFFERTES pour toute commande de Pizza ou Burger ! 🥤🎁",
+            promo_active: true
+        };
         let currentLang = localStorage.getItem('p_love_lang') || "fr";
         let cart = [];
         let selectedProduct = null;
         let adminClickCount = 0;
 
-        // Charger toutes les données depuis Supabase au démarrage
         async function loadDataFromSupabase() {
             try {
-                // 1. Charger la config globale
                 let { data: configData } = await _supabase.from('site_settings').select('*').eq('id', 1).single();
-                config = configData || {};
+                if (configData) config = configData;
 
-                // 2. Charger les items du menu
                 let { data: itemsData } = await _supabase.from('items').select('*').order('id', { ascending: true });
                 items = itemsData || [];
 
-                // 3. Charger les avis
                 let { data: reviewsData } = await _supabase.from('reviews').select('*').order('created_at', { ascending: false });
                 reviews = reviewsData || [];
 
                 renderSite();
             } catch (err) {
-                console.error("Erreur de chargement Supabase:", err);
+                console.error("Erreur Supabase:", err);
+                renderSite();
             }
         }
 
@@ -297,17 +307,16 @@
         }
 
         function renderSite() {
-            // Appliquer les configurations dynamiques de la BDD
-            document.getElementById('site-title').innerText = config.title || "Pizza Love";
-            document.getElementById('site-subtitle').innerText = config.subtitle || "";
-            document.getElementById('banner-info').innerText = config.banner || "";
-            document.getElementById('title-find-us').innerText = config.title_find || "";
-            document.getElementById('promo-msg').innerText = config.promo_msg || "";
+            document.getElementById('site-title').innerText = config.title;
+            document.getElementById('site-subtitle').innerText = config.subtitle;
+            document.getElementById('banner-info').innerText = config.banner;
+            document.getElementById('title-find-us').innerText = config.title_find;
+            document.getElementById('promo-msg').innerText = config.promo_msg;
             document.getElementById('promo-msg').style.display = config.promo_msg?.trim() ? 'block' : 'none';
             
-            document.body.style.backgroundColor = config.body_bg || "#FFFDF9";
+            document.body.style.backgroundColor = config.body_bg;
             document.getElementById('site-header').style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${config.header_bg}')`;
-            document.getElementById('site-map').src = config.map_url || "";
+            document.getElementById('site-map').src = config.map_url;
 
             const pizzaContainer = document.getElementById('pizza-container');
             const burgerContainer = document.getElementById('burger-container');
@@ -317,6 +326,7 @@
 
             items.forEach(item => {
                 const isDrink = item.type === 'drink';
+                // Correction de la variable CSS ici (liaison avec item.crop_x de Supabase)
                 const imgTag = (isDrink && item.crop_x) 
                     ? `<img src="${item.img}" class="drink-crop" style="--crop-x: ${item.crop_x}" alt="${item.name}">`
                     : `<img src="${item.img}" alt="${item.name}">`;
@@ -609,7 +619,6 @@
             event.target.classList.add('active');
         }
 
-        // Démarrage initial
         loadDataFromSupabase();
     </script>
 </body>
