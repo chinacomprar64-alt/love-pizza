@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pizza Love</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #A61C1C;
+            --secondary: #14532D;
+            --accent: #D9A05B;
+            --bg: #FFFDF9;
+            --dark: #2A2A2A;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: var(--bg); color: var(--dark); line-height: 1.6; padding-bottom: 60px; }
+        
+        .top-bar { background: #111; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; flex-wrap: wrap; gap: 10px; }
+        .lang-selector select { background: #333; color: white; border: 1px solid #555; padding: 5px; border-radius: 4px; cursor: pointer; }
+
+        header { background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80') center/cover; color: white; text-align: center; padding: 80px 20px; position: relative; }
+        h1 { font-size: 3.5rem; font-style: italic; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
+        
+        .badge-italy { height: 12px; width: 120px; background: linear-gradient(to right, #14532D 33%, #FFF 33% 66%, #A61C1C 66%); margin: 15px auto; cursor: pointer; }
+        .promo-banner { background: #eab308; color: #111; text-align: center; padding: 8px; font-weight: bold; font-size: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        h2 { border-bottom: 3px solid var(--primary); display: inline-block; margin-bottom: 30px; padding-bottom: 5px; color: var(--primary); }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; margin-bottom: 50px; }
+        
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); position: relative; transition: 0.3s; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-5px); }
+        
+        .card .img-container { width: 100%; height: 200px; background: white; display: flex; align-items: center; justify-content: center; padding: 15px; overflow: hidden; }
+        .card img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        .card .drink-crop { width: 110px; height: 180px; object-fit: cover; object-position: var(--crop-x) center; }
+
+        .card-body { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
+        .card-price { font-size: 1.2rem; color: var(--primary); font-weight: bold; margin: 5px 0; }
+        .stock-tag { position: absolute; top: 10px; right: 10px; padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; color: white; z-index: 10; }
+        .in-stock { background: #22c55e; }
+        .out-of-stock { background: #ef4444; }
+
+        .footer-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; margin-top: 60px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .map-box iframe { width: 100%; height: 260px; border: 0; border-radius: 8px; }
+        
+        .reviews-box { max-height: 220px; overflow-y: auto; margin-bottom: 20px; padding-right: 5px; }
+        .review-card { background: #f9f9f9; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent); }
+        .stars { color: #f59e0b; font-weight: bold; }
+
+        .cart-float { position: fixed; bottom: 30px; right: 20px; background: var(--primary); color: white; padding: 15px 25px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 5px 20px rgba(166,28,28,0.4); z-index: 99; display: flex; align-items: center; gap: 10px; transition: 0.2s; }
+        .cart-float:hover { transform: scale(1.05); }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto; padding: 20px; }
+        .modal-content { background: white; max-width: 600px; margin: 50px auto; padding: 30px; border-radius: 12px; position: relative; animation: fadeIn 0.3s; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.8rem; cursor: pointer; color: #aaa; }
+
+        .remove-ingredient-list { margin: 15px 0; display: flex; flex-wrap: wrap; gap: 10px; }
+        .remove-item { background: #fee2e2; border: 1px solid #fca5a5; padding: 6px 12px; border-radius: 20px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; }
+
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .discount-text { color: #22c55e; font-weight: bold; font-size: 0.9rem; }
+
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; text-align: center; display: block; text-decoration: none; margin-top: auto; }
+        .btn:hover { background: #851414; }
+        .btn-danger { background: #ef4444; padding: 5px 10px; font-size: 0.8rem; width: auto; margin: 0; }
+
+        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; }
+
+        .admin-content { max-width: 950px; }
+        .admin-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .tab-btn { background: #eee; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; }
+        .tab-btn.active { background: var(--secondary); color: white; }
+        .admin-tab-content { display: none; }
+        .admin-tab-content.active { display: block; }
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .admin-table th, .admin-table td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 0.9rem; }
+        .admin-table th { background: #f4f4f4; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div id="banner-info">Chargement...</div>
+        <div class="lang-selector">
+            🌐 <select id="langSelect" onchange="changeLanguage(this.value)">
+                <option value="fr">Français 🇫🇷</option>
+                <option value="it">Italiano 🇮🇹</option>
+                <option value="es">Español 🇪🇸</option>
+                <option value="en">English 🇬🇧</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="promo-banner" id="promo-msg">Chargement des offres...</div>
+
+    <header id="site-header">
+        <h1 id="site-title">Pizza Love</h1>
+        <p id="site-subtitle" style="font-size: 1.3rem;">Chargement...</p>
+        <div class="badge-italy" onclick="secretAdminClick()"></div>
+    </header>
+
+    <div class="container">
+        <h2 id="title-pizzas">Nos Pizzas Artisanales</h2>
+        <div class="menu-grid" id="pizza-container"></div>
+
+        <h2 id="title-burgers">Nos Burgers Gourmets</h2>
+        <div class="menu-grid" id="burger-container"></div>
+
+        <h2 id="title-drinks">Nos Boissons Fraîches</h2>
+        <div class="menu-grid" id="drink-container"></div>
+
+        <div class="footer-info-grid">
+            <div class="map-box">
+                <h3 style="margin-bottom:15px; color:var(--primary)" id="title-find-us">📍 Où nous trouver</h3>
+                <iframe id="site-map" src="" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+
+            <div>
+                <h3 style="margin-bottom:15px; color:var(--primary)" id="title-reviews">💬 Avis de nos Clients</h3>
+                <div class="reviews-box" id="reviews-container"></div>
+                
+                <div style="background:#f3f4f6; padding:15px; border-radius:8px;">
+                    <input type="text" id="rev-name" placeholder="Votre nom" style="margin:4px 0;">
+                    <select id="rev-stars" style="margin:4px 0;">
+                        <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+                        <option value="4">⭐⭐⭐⭐ (4/5)</option>
+                    </select>
+                    <textarea id="rev-comment" placeholder="Votre commentaire..." rows="2" style="margin:4px 0; font-family:inherit;"></textarea>
+                    <button class="btn" style="padding:8px; margin-top:5px; font-size:0.9rem;" onclick="submitReview()">Publier mon avis</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cart-float" onclick="openCartModal()">
+        🛒 <span id="cart-text">Panier</span> (<span id="cart-count">0</span>)
+    </div>
+
+    <div class="modal" id="customModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('customModal')">×</span>
+            <h3 id="modal-product-name">Nom du produit</h3>
+            <p style="color: gray; font-size: 0.9rem; margin-bottom: 15px;" id="text-custom-desc">Options :</p>
+            <div class="remove-ingredient-list" id="ingredient-checkboxes"></div>
+            <h4 style="margin: 20px 0 10px 0;"><span id="text-price">Prix</span> : <span id="modal-product-price" style="color:var(--primary)">0.00</span> €</h4>
+            <button class="btn" id="btn-add-custom" onclick="addCurrentItemToCart()">Ajouter au Panier</button>
+        </div>
+    </div>
+
+    <div class="modal" id="cartModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('cartModal')">×</span>
+            <h3 id="title-your-cart">Votre Panier</h3>
+            <div id="cart-items-list" style="margin: 20px 0; max-height: 250px; overflow-y: auto;"></div>
+            <div id="promo-notice" style="margin-bottom: 15px;"></div>
+            <h3 style="margin-bottom: 20px;">Total: <span id="cart-total">0.00</span> €</h3>
+            <button class="btn" id="btn-insta-order" onclick="checkoutInstagram()" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);">
+                📸 Commander via Instagram
+            </button>
+        </div>
+    </div>
+
+    <div class="modal" id="adminModal">
+        <div class="modal-content admin-content">
+            <span class="close-btn" onclick="closeModal('adminModal')">×</span>
+            <h3>⚙️ Espace Gestion Pizza Love</h3>
+            
+            <div class="admin-tabs">
+                <button class="tab-btn active" onclick="switchTab('tab-items')">Menu, Stocks & Photos</button>
+                <button class="tab-btn" onclick="switchTab('tab-add')">Ajouter Produit / Boisson</button>
+                <button class="tab-btn" onclick="switchTab('tab-promo')">Offres & Promos 🎁</button>
+                <button class="tab-btn" onclick="switchTab('tab-design')" style="background:#b45309; color:white;">✨ Design & Infos Site</button>
+                <button class="tab-btn" onclick="switchTab('tab-reviews')">Avis Clients</button>
+            </div>
+
+            <div id="tab-items" class="admin-tab-content active">
+                <table class="admin-table">
+                    <thead><tr><th>Produit / Boisson</th><th>Prix (€)</th><th>Lien Photo (URL)</th><th>Stock</th><th>Action</th></tr></thead>
+                    <tbody id="admin-table-body"></tbody>
+                </table>
+            </div>
+
+            <div id="tab-add" class="admin-tab-content">
+                <h4>Créer un nouvel article</h4>
+                <select id="new-type">
+                    <option value="pizza">Pizza 🍕</option>
+                    <option value="burger">Burger 🍔</option>
+                    <option value="drink">Boisson Fraîche 🥤</option>
+                </select>
+                <input type="text" id="new-name" placeholder="Nom (ex: Coca-Cola)">
+                <input type="text" id="new-desc" placeholder="Description ou Ingrédients">
+                <input type="number" step="0.01" id="new-price" placeholder="Prix (ex: 1.50)">
+                <input type="text" id="new-img" placeholder="URL ou nom de l'image">
+                <button class="btn" style="margin-top:10px;" onclick="addNewProduct()">Enregistrer le produit</button>
+            </div>
+
+            <div id="tab-promo" class="admin-tab-content">
+                <h4>Activer / Désactiver les offres</h4>
+                <div style="margin: 15px 0; background: #f3f4f6; padding: 15px; border-radius: 8px;">
+                    <label style="font-weight: bold; display: block; margin-bottom: 8px;">
+                        <input type="checkbox" id="toggle-promo-active"> Activer le système de boissons offertes dans le panier
+                    </label>
+                </div>
+                <h4>Texte de la bannière promotionnelle</h4>
+                <input type="text" id="edit-promo-msg">
+                <button class="btn" style="margin-top:10px;" onclick="savePromoSettings()">Appliquer les modifications</button>
+            </div>
+
+            <div id="tab-design" class="admin-tab-content">
+                <h4>Modifier les Textes principaux</h4>
+                <label>Nom du Site :</label> <input type="text" id="edit-site-title">
+                <label>Sous-titre du haut :</label> <input type="text" id="edit-site-subtitle">
+                <label>Infos d'entête (Adresse & Horaires) :</label> <input type="text" id="edit-banner-info">
+                <label>Texte "Où nous trouver" :</label> <input type="text" id="edit-title-find-us">
+                
+                <h4 style="margin-top:20px;">Modifier les Photos & l'Arrière-plan</h4>
+                <label>Image de Fond du Haut (Lien/URL) :</label> <input type="text" id="edit-header-bg">
+                <label>Couleur de Fond Générale (Code ex: #FFFDF9) :</label> <input type="text" id="edit-body-bg">
+                <label>Lien Iframe Carte Google Maps (URL `src=`) :</label> <input type="text" id="edit-site-map">
+                
+                <h4 style="margin-top:20px;">Réseaux & Commande</h4>
+                <label>Lien Profil Instagram :</label> <input type="text" id="edit-insta-url">
+                <label>Nom d'utilisateur Instagram :</label> <input type="text" id="edit-insta-username">
+
+                <button class="btn" style="margin-top:15px; background: #b45309;" onclick="saveDesignSettings()">Sauvegarder l'apparence et les infos</button>
+            </div>
+
+            <div id="tab-reviews" class="admin-tab-content">
+                <table class="admin-table">
+                    <thead><tr><th>Client</th><th>Avis</th><th>Action</th></tr></thead>
+                    <tbody id="admin-reviews-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---- CONFI_SUPABASE : METTEZ VOS COORDONNÉES ICI ----
+        const SUPABASE_URL = "https://xipayodmvrwwlufembmg.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_lLiUWD4kfs-OOWUp09zglw_1R0weLbr";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const translations = {
+            fr: { pizzas: "Nos Pizzas Artisanales", burgers: "Nos Burgers Gourmets", drinks: "Nos Boissons Fraîches", cart: "Panier", yourCart: "Votre Panier", customDesc: "Modifier vos options :", price: "Prix", addCart: "Ajouter au Panier" },
+            it: { pizzas: "Le Nostre Pizze Artigianali", burgers: "I Nostri Burger Gourmet", drinks: "Le Nostre Bevande", cart: "Carrello", yourCart: "Il Tuo Carrello", customDesc: "Personalizza le tue preferenze :", price: "Prezzo", addCart: "Aggiungi" },
+            es: { pizzas: "Nuestras Pizzas Artesanales", burgers: "Nuestras Hamburguesas", drinks: "Nuestras Bebidas", cart: "Carrito", yourCart: "Tu Carrito", customDesc: "Configura tus preferences :", price: "Precio", addCart: "Añadir" },
+            en: { pizzas: "Our Artisanal Pizzas", burgers: "Our Gourmet Burgers", drinks: "Our Cold Drinks", cart: "Cart", yourCart: "Your Cart", customDesc: "Uncheck ingredients or customize option:", price: "Price", addCart: "Add to Cart" }
+        };
+
+        let items = [];
+        let reviews = [];
+        let config = {};
+        let currentLang = localStorage.getItem('p_love_lang') || "fr";
+        let cart = [];
+        let selectedProduct = null;
+        let adminClickCount = 0;
+
+        // Charger toutes les données depuis Supabase au démarrage
+        async function loadDataFromSupabase() {
+            try {
+                // 1. Charger la config globale
+                let { data: configData } = await _supabase.from('site_settings').select('*').eq('id', 1).single();
+                config = configData || {};
+
+                // 2. Charger les items du menu
+                let { data: itemsData } = await _supabase.from('items').select('*').order('id', { ascending: true });
+                items = itemsData || [];
+
+                // 3. Charger les avis
+                let { data: reviewsData } = await _supabase.from('reviews').select('*').order('created_at', { ascending: false });
+                reviews = reviewsData || [];
+
+                renderSite();
+            } catch (err) {
+                console.error("Erreur de chargement Supabase:", err);
+            }
+        }
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('p_love_lang', lang);
+            document.getElementById('title-pizzas').innerText = translations[lang].pizzas;
+            document.getElementById('title-burgers').innerText = translations[lang].burgers;
+            document.getElementById('title-drinks').innerText = translations[lang].drinks;
+            document.getElementById('cart-text').innerText = translations[lang].cart;
+            document.getElementById('title-your-cart').innerText = translations[lang].yourCart;
+            document.getElementById('text-custom-desc').innerText = translations[lang].customDesc;
+            document.getElementById('text-price').innerText = translations[lang].price;
+            document.getElementById('btn-add-custom').innerText = translations[lang].addCart;
+            document.getElementById('langSelect').value = lang;
+        }
+
+        function renderSite() {
+            // Appliquer les configurations dynamiques de la BDD
+            document.getElementById('site-title').innerText = config.title || "Pizza Love";
+            document.getElementById('site-subtitle').innerText = config.subtitle || "";
+            document.getElementById('banner-info').innerText = config.banner || "";
+            document.getElementById('title-find-us').innerText = config.title_find || "";
+            document.getElementById('promo-msg').innerText = config.promo_msg || "";
+            document.getElementById('promo-msg').style.display = config.promo_msg?.trim() ? 'block' : 'none';
+            
+            document.body.style.backgroundColor = config.body_bg || "#FFFDF9";
+            document.getElementById('site-header').style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${config.header_bg}')`;
+            document.getElementById('site-map').src = config.map_url || "";
+
+            const pizzaContainer = document.getElementById('pizza-container');
+            const burgerContainer = document.getElementById('burger-container');
+            const drinkContainer = document.getElementById('drink-container');
+            
+            pizzaContainer.innerHTML = ''; burgerContainer.innerHTML = ''; drinkContainer.innerHTML = '';
+
+            items.forEach(item => {
+                const isDrink = item.type === 'drink';
+                const imgTag = (isDrink && item.crop_x) 
+                    ? `<img src="${item.img}" class="drink-crop" style="--crop-x: ${item.crop_x}" alt="${item.name}">`
+                    : `<img src="${item.img}" alt="${item.name}">`;
+
+                const cardHtml = `
+                    <div class="card" onclick="openCustomModal(${item.id})">
+                        <span class="stock-tag ${item.stock ? 'in-stock' : 'out-of-stock'}">${item.stock ? 'OK' : 'Épuisé'}</span>
+                        <div class="img-container">
+                            ${imgTag}
+                        </div>
+                        <div class="card-body">
+                            <h3>${item.name}</h3>
+                            <p style="color:gray; font-size:0.85rem; margin: 5px 0; min-height:40px;">${item.desc_text || ''}</p>
+                            <div class="card-price">${parseFloat(item.price).toFixed(2)} €</div>
+                            <button class="btn" ${!item.stock ? 'disabled style="background:gray"' : ''}>
+                                ${item.stock ? (isDrink ? 'Ajouter' : 'Commander') : 'Indisponible'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                if(item.type === 'pizza') pizzaContainer.innerHTML += cardHtml;
+                else if(item.type === 'burger') burgerContainer.innerHTML += cardHtml;
+                else drinkContainer.innerHTML += cardHtml;
+            });
+
+            renderReviews();
+            changeLanguage(currentLang);
+            updateCartUI();
+        }
+
+        function openCustomModal(id) {
+            const item = items.find(i => i.id === id);
+            if(!item.stock) return;
+            selectedProduct = JSON.parse(JSON.stringify(item));
+            document.getElementById('modal-product-name').innerText = selectedProduct.name;
+            document.getElementById('modal-product-price').innerText = parseFloat(selectedProduct.price).toFixed(2);
+            
+            const container = document.getElementById('ingredient-checkboxes');
+            container.innerHTML = '';
+            
+            if(selectedProduct.type !== 'drink' && selectedProduct.desc_text) {
+                const ingredients = selectedProduct.desc_text.split(', ');
+                ingredients.forEach(ing => {
+                    container.innerHTML += `<label class="remove-item"><input type="checkbox" checked data-ing="${ing}" onchange="toggleIngredient(this)"> ${ing}</label>`;
+                });
+            } else {
+                container.innerHTML = `<p style="font-size:0.9rem; color:green;">🥤 Boisson fraîche sélectionnée.</p>`;
+            }
+            document.getElementById('customModal').style.display = 'block';
+        }
+
+        function toggleIngredient(checkbox) {
+            const ingName = checkbox.getAttribute('data-ing');
+            if(!checkbox.checked) {
+                if(!selectedProduct.removed) selectedProduct.removed = [];
+                selectedProduct.removed.push(ingName);
+            } else {
+                selectedProduct.removed = selectedProduct.removed.filter(i => i !== ingName);
+            }
+        }
+
+        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        function openCartModal() { document.getElementById('cartModal').style.display = 'block'; }
+        function addCurrentItemToCart() { cart.push(selectedProduct); closeModal('customModal'); updateCartUI(); }
+
+        function updateCartUI() {
+            document.getElementById('cart-count').innerText = cart.length;
+            const list = document.getElementById('cart-items-list');
+            const promoNotice = document.getElementById('promo-notice');
+            list.innerHTML = ''; promoNotice.innerHTML = '';
+            
+            let total = 0;
+            let countFood = 0;
+            let drinksInCart = [];
+
+            cart.forEach((item, index) => {
+                if(item.type === 'pizza' || item.type === 'burger') countFood++;
+                if(item.type === 'drink') drinksInCart.push(index);
+            });
+
+            let freeDrinksAllowed = (config.promo_active && countFood > 0) ? 2 : 0;
+            let discountedDrinkIndices = drinksInCart.slice(0, freeDrinksAllowed);
+
+            cart.forEach((item, index) => {
+                let currentItemPrice = parseFloat(item.price);
+                let isFree = discountedDrinkIndices.includes(index);
+                
+                if(isFree) currentItemPrice = 0;
+                total += currentItemPrice;
+
+                const sansText = item.removed && item.removed.length > 0 ? ` <span style="color:red;">(SANS: ${item.removed.join(', ')})</span>` : '';
+                const priceText = isFree ? `<span class="discount-text">GRATUIT (Offre 🎉)</span>` : `${parseFloat(item.price).toFixed(2)} €`;
+
+                list.innerHTML += `
+                    <div class="cart-item">
+                        <div>
+                            <strong>${item.name}</strong>${sansText}
+                            <div style="font-size:0.85rem;color:#666">${priceText}</div>
+                        </div>
+                        <button class="btn btn-danger" onclick="removeFromCart(${index})">X</button>
+                    </div>
+                `;
+            });
+
+            if(config.promo_active && countFood > 0) {
+                if(discountedDrinkIndices.length === 0) {
+                    promoNotice.innerHTML = `<p style="color:#b45309; font-weight:bold; font-size:0.85rem;">🎁 Offre : Ajoutez jusqu'à 2 boissons dans votre panier, elles seront 100% GRATUITES !</p>`;
+                } else {
+                    promoNotice.innerHTML = `<p style="color:#22c55e; font-weight:bold; font-size:0.85rem;">🎉 Remise appliquée sur vos boissons !</p>`;
+                }
+            }
+
+            document.getElementById('cart-total').innerText = total.toFixed(2);
+        }
+
+        function removeFromCart(index) { cart.splice(index, 1); updateCartUI(); }
+
+        function checkoutInstagram() {
+            if(cart.length === 0) { alert("Panier vide !"); return; }
+            let countFood = 0;
+            cart.forEach(i => { if(i.type==='pizza'||i.type==='burger') countFood++; });
+            let drinksCount = 0;
+
+            let message = "Bonjour Pizza Love ! Voici ma commande :\n\n";
+            cart.forEach((item) => {
+                const sansText = item.removed && item.removed.length > 0 ? ` (SANS: ${item.removed.join(', ')})` : '';
+                let priceLabel = "";
+                if(config.promo_active && item.type === 'drink' && countFood > 0 && drinksCount < 2) {
+                    priceLabel = " (OFFERTE)";
+                    drinksCount++;
+                }
+                message += `- 1x ${item.name}${sansText}${priceLabel}\n`;
+            });
+            message += `\n💰 Total final : ${document.getElementById('cart-total').innerText} €`;
+            
+            navigator.clipboard.writeText(message).then(() => {
+                alert(`🛒 Votre commande a été copiée !\n\nCollez simplement votre message en DM sur Instagram ${config.insta_user || ''}.`);
+                window.open(config.insta_url, "_blank");
+            });
+        }
+
+        function renderReviews() {
+            const container = document.getElementById('reviews-container'); container.innerHTML = '';
+            reviews.forEach(rev => {
+                container.innerHTML += `<div class="review-card"><strong>${rev.name}</strong> <span class="stars">${"⭐".repeat(rev.stars)}</span><p style="font-size:0.9rem; margin-top:4px;">${rev.comment}</p></div>`;
+            });
+        }
+
+        async function submitReview() {
+            const name = document.getElementById('rev-name').value.trim();
+            const stars = parseInt(document.getElementById('rev-stars').value);
+            const comment = document.getElementById('rev-comment').value.trim();
+            if(!name || !comment) return;
+            
+            await _supabase.from('reviews').insert([{ name, stars, comment }]);
+            document.getElementById('rev-name').value = ''; document.getElementById('rev-comment').value = '';
+            loadDataFromSupabase();
+        }
+
+        function secretAdminClick() {
+            adminClickCount++;
+            if(adminClickCount >= 3) {
+                adminClickCount = 0;
+                if(prompt("Code gérant :") === "3322") {
+                    document.getElementById('adminModal').style.display = 'block';
+                    document.getElementById('toggle-promo-active').checked = config.promo_active;
+                    document.getElementById('edit-promo-msg').value = config.promo_msg;
+                    
+                    document.getElementById('edit-site-title').value = config.title;
+                    document.getElementById('edit-site-subtitle').value = config.subtitle;
+                    document.getElementById('edit-banner-info').value = config.banner;
+                    document.getElementById('edit-title-find-us').value = config.title_find;
+                    document.getElementById('edit-header-bg').value = config.header_bg;
+                    document.getElementById('edit-body-bg').value = config.body_bg;
+                    document.getElementById('edit-site-map').value = config.map_url;
+                    document.getElementById('edit-insta-url').value = config.insta_url;
+                    document.getElementById('edit-insta-username').value = config.insta_user;
+
+                    renderAdminTable();
+                    renderAdminReviewsTable();
+                }
+            }
+            setTimeout(() => { adminClickCount = 0; }, 2000);
+        }
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('admin-table-body'); tbody.innerHTML = '';
+            items.forEach((item, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${item.name}</strong></td>
+                        <td><input type="number" step="0.01" value="${item.price}" style="width:70px;" onchange="updateItemField(${item.id}, 'price', this.value)"></td>
+                        <td><input type="text" value="${item.img}" style="width:180px; font-size:0.8rem;" onchange="updateItemField(${item.id}, 'img', this.value)"></td>
+                        <td>
+                            <select onchange="updateItemField(${item.id}, 'stock', this.value === 'true')">
+                                <option value="true" ${item.stock ? 'selected' : ''}>En Stock</option>
+                                <option value="false" ${!item.stock ? 'selected' : ''}>Rupture</option>
+                            </select>
+                        </td>
+                        <td><button class="btn btn-danger" onclick="deleteProduct(${item.id})">Supprimer</button></td>
+                    </tr>`;
+            });
+        }
+
+        function renderAdminReviewsTable() {
+            const tbody = document.getElementById('admin-reviews-table-body'); tbody.innerHTML = '';
+            reviews.forEach((rev) => {
+                tbody.innerHTML += `<tr><td><strong>${rev.name}</strong></td><td><small>${rev.comment}</small></td><td><button class="btn btn-danger" onclick="deleteReview(${rev.id})">Supprimer</button></td></tr>`;
+            });
+        }
+
+        async function updateItemField(id, field, value) {
+            let updatedValue = value;
+            if(field === 'price') updatedValue = parseFloat(value);
+            if(field === 'stock') updatedValue = (value === true || value === 'true');
+
+            let updatePayload = {};
+            updatePayload[field] = updatedValue;
+
+            await _supabase.from('items').update(updatePayload).eq('id', id);
+            loadDataFromSupabase();
+        }
+
+        async function deleteProduct(id) {
+            if(confirm("Supprimer ce produit définitivement ?")) {
+                await _supabase.from('items').delete().eq('id', id);
+                loadDataFromSupabase();
+                closeModal('adminModal');
+            }
+        }
+        
+        async function deleteReview(id) { 
+            await _supabase.from('reviews').delete().eq('id', id); 
+            loadDataFromSupabase(); 
+            closeModal('adminModal');
+        }
+
+        async function addNewProduct() {
+            const type = document.getElementById('new-type').value; 
+            const name = document.getElementById('new-name').value.trim();
+            const desc_text = document.getElementById('new-desc').value.trim(); 
+            const price = parseFloat(document.getElementById('new-price').value);
+            const img = document.getElementById('new-img').value.trim() || "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=500&q=80";
+            
+            if(!name || isNaN(price)) { alert("Veuillez remplir le nom et le prix correctement !"); return; }
+            
+            await _supabase.from('items').insert([{ type, name, desc_text, price, stock: true, img }]);
+            
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-desc').value = '';
+            document.getElementById('new-price').value = '';
+            document.getElementById('new-img').value = '';
+            
+            loadDataFromSupabase(); 
+            closeModal('adminModal');
+        }
+
+        async function savePromoSettings() {
+            const promo_active = document.getElementById('toggle-promo-active').checked;
+            const promo_msg = document.getElementById('edit-promo-msg').value;
+            
+            await _supabase.from('site_settings').update({ promo_active, promo_msg }).eq('id', 1);
+            loadDataFromSupabase();
+            closeModal('adminModal');
+        }
+
+        async function saveDesignSettings() {
+            const payload = {
+                title: document.getElementById('edit-site-title').value,
+                subtitle: document.getElementById('edit-site-subtitle').value,
+                banner: document.getElementById('edit-banner-info').value,
+                title_find: document.getElementById('edit-title-find-us').value,
+                header_bg: document.getElementById('edit-header-bg').value,
+                body_bg: document.getElementById('edit-body-bg').value,
+                map_url: document.getElementById('edit-site-map').value,
+                insta_url: document.getElementById('edit-insta-url').value,
+                insta_user: document.getElementById('edit-insta-username').value
+            };
+
+            await _supabase.from('site_settings').update(payload).eq('id', 1);
+            loadDataFromSupabase();
+            closeModal('adminModal');
+            alert("✨ Enregistré avec succès dans la base de données Supabase !");
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Démarrage initial
+        loadDataFromSupabase();
+    </script>
+</body>
+</html>
